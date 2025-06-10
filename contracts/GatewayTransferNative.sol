@@ -104,7 +104,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
      * @param _gateway Gateway contract address
      * @param _EddyTreasurySafe Address of the platform fee wallets
      * @param _dodoRouteProxy Address of the DODORouteProxy
-     * @param _feePercent Platform fee percentage in basis points (e.g., 10 = 1%)
+     * @param _feePercent Platform fee percentage in 1/1000 (e.g., 5 = 0.5%)
      */
     function initialize(
         address payable _gateway,
@@ -337,7 +337,12 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         uint256 amount
     ) internal returns (uint256 platformFeesForTx) {
         platformFeesForTx = (amount * feePercent) / 1000; // platformFee = 5 <> 0.5%
-        TransferHelper.safeTransfer(zrc20, EddyTreasurySafe, platformFeesForTx);
+        
+        if(zrc20 == _ETH_ADDRESS_) {
+            TransferHelper.safeTransferETH(EddyTreasurySafe, platformFeesForTx);
+        } else {
+            TransferHelper.safeTransfer(zrc20, EddyTreasurySafe, platformFeesForTx);
+        }
     }
 
     /**
@@ -425,11 +430,14 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             return amount;
         }
 
-        if(params.fromToken != _ETH_ADDRESS_) {
+        bool fromIsETH = params.fromToken == _ETH_ADDRESS_;
+        uint256 valueToSend = fromIsETH ? amount : 0;
+
+        if(!fromIsETH) {
             TransferHelper.safeApprove(params.fromToken, DODOApprove, params.fromTokenAmount);
         }
 
-        return IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
+        return IDODORouteProxy(DODORouteProxy).mixSwap{value: valueToSend}(
             params.fromToken,
             params.toToken,
             params.fromTokenAmount,
