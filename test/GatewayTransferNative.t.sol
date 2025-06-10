@@ -454,6 +454,59 @@ contract GatewayTransferNativeTest is BaseTest {
         assertEq(token1B.balanceOf(user2), 99000000000000000000); 
     }
 
+    // zetachain swap - B: ETH -> token1Z -> token1B
+    function test_ZNativeSwap2B() public {
+        uint256 amount = 100 ether;
+        uint32 dstChainId = 2;
+        address targetZRC20 = address(token1Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
+        bytes memory swapDataZ = encodeCompressedMixSwapParams(
+            _ETH_ADDRESS_,
+            address(token1Z),
+            amount,
+            0,
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
+        );
+        bytes memory contractAddress = abi.encodePacked(address(gatewaySendB));
+        bytes memory fromTokenB = abi.encodePacked(address(token1B));
+        bytes memory toTokenB = abi.encodePacked(address(token1B));
+        bytes memory swapDataB = "";
+        bytes memory accounts = "";
+        bytes memory message = encodeMessage(
+            dstChainId,
+            targetZRC20,
+            sender,
+            receiver,
+            swapDataZ,
+            contractAddress,
+            abi.encodePacked(
+                fromTokenB, 
+                toTokenB, 
+                swapDataB
+            ),
+            accounts
+        );
+
+        vm.startPrank(user1);
+        gatewayTransferNative.withdrawToNativeChain{value: amount}(
+            _ETH_ADDRESS_,
+            amount,
+            message
+        );
+        vm.stopPrank();
+
+        assertEq(user1.balance, initialBalance - amount);
+        assertEq(token1B.balanceOf(user2), 99000000000000000000);
+    }
+
     // zetachain swap - B：token1Z -> token2Z -> token2B
     function test_ZSwap2B() public {
         uint256 amount = 100 ether;
