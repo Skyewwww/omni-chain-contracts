@@ -386,7 +386,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             );
         } else {
             // Swap on DODO Router
-            uint256 outputAmount = _doMixSwap(decoded.swapData, amount, params);
+            uint256 outputAmount = _doMixSwap(decoded.swapData, amount - platformFeesForTx, params);
 
             if (decoded.targetZRC20 == WZETA) {
                 // withdraw WZETA to get Zeta in 1:1 ratio
