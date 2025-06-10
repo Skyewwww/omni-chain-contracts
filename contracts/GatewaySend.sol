@@ -390,17 +390,27 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param context Revert context
      * @dev Only the gateway can call this function
      */
-    function onRevert(RevertContext calldata context) external onlyGateway {
+    function onRevert(RevertContext calldata context) external payable onlyGateway {
         bytes32 externalId = bytes32(context.revertMessage[0:32]);
         address sender = address(uint160(bytes20(context.revertMessage[32:])));
-        TransferHelper.safeTransfer(context.asset, sender, context.amount);
-        
-        emit EddyCrossChainRevert(
-            externalId,
-            context.asset,
-            context.amount,
-            sender
-        );
+
+        if(msg.value > 0) {
+            TransferHelper.safeTransferETH(sender, msg.value);
+            emit EddyCrossChainRevert(
+                externalId,
+                _ETH_ADDRESS_,
+                msg.value,
+                sender
+            );
+        } else {
+            TransferHelper.safeTransfer(context.asset, sender, context.amount);
+            emit EddyCrossChainRevert(
+                externalId,
+                context.asset,
+                context.amount,
+                sender
+            );
+        }
     }
 
     receive() external payable {}
