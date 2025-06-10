@@ -91,6 +91,7 @@ contract BaseTest is Test {
         dodoRouteProxyZ.setPrice(address(token1Z), address(btcZ), 1e18); // 1 token1Z = 1 btcZ
         dodoRouteProxyZ.setPrice(address(token2Z), address(btcZ), 2e18); // 1 token2Z = 2 btcZ
         dodoRouteProxyZ.setPrice(address(token1Z), WZETA, 1e18); 
+        dodoRouteProxyZ.setPrice(address(token1Z), _ETH_ADDRESS_, 1e18); // 1 token1Z = 1 ETH
         dodoRouteProxyB.setPrice(address(token1B), address(token2B), 4e18); // 1 token1B = 4 token2B
         dodoRouteProxyB.setPrice(address(token2B), _ETH_ADDRESS_, 1e18); // 1 token2B = 1 ETH
         dodoRouteProxyB.setPrice(address(token1B), _ETH_ADDRESS_, 1e18); // 1 token1B = 1 ETH
