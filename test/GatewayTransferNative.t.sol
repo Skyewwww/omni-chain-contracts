@@ -935,37 +935,48 @@ contract GatewayTransferNativeTest is BaseTest {
     }
 
     function test_ZOnAbort() public {
-        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
-        uint256 amount = 100 ether;
-        token1Z.mint(address(gatewayTransferNative), amount);
+        bytes32 externalId1 = keccak256(abi.encodePacked(block.timestamp));
+        token1Z.mint(address(gatewayTransferNative), 2 * initialBalance);
 
-        vm.prank(address(gatewayZEVM));
+        vm.startPrank(address(gatewayZEVM));
         gatewayTransferNative.onAbort(
             AbortContext({
                 sender: abi.encode(address(this)),
                 asset: address(token1Z),
-                amount: amount,
+                amount: initialBalance,
                 outgoing: false,
                 chainID: 7000,
-                revertMessage: bytes.concat(externalId, bytes20(user2))
+                revertMessage: bytes.concat(externalId1, abi.encodePacked(user2))
             })
         );
 
+        bytes32 externalId2 = keccak256(abi.encodePacked(block.timestamp + 600));
+        gatewayTransferNative.onAbort(
+            AbortContext({
+                sender: abi.encode(address(this)),
+                asset: address(token1Z),
+                amount: initialBalance,
+                outgoing: false,
+                chainID: 7000,
+                revertMessage: bytes.concat(externalId2, solAddress)
+            })
+        );
+        vm.stopPrank();
+
+        vm.prank(bot);
+        gatewayTransferNative.claimRefund(externalId2);
+        assertEq(token1Z.balanceOf(bot), initialBalance);
+
         vm.expectRevert();
-        gatewayTransferNative.claimRefund(externalId);
+        gatewayTransferNative.claimRefund(externalId1);
 
         vm.expectRevert();
         vm.prank(user2);
         gatewayTransferNative.claimRefund(bytes32(0));
 
         vm.prank(user2);
-        gatewayTransferNative.claimRefund(externalId);
-
-        vm.expectRevert();
-        vm.prank(user2);
-        gatewayTransferNative.claimRefund(externalId);
-
-        assertEq(token1Z.balanceOf(user2), amount);
+        gatewayTransferNative.claimRefund(externalId1);
+        assertEq(token1Z.balanceOf(user2), initialBalance);
     }
 
     function test_Revert() public {
