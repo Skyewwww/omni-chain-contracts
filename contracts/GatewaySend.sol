@@ -235,10 +235,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 "INSUFFICIENT AMOUNT: ETH NOT ENOUGH"
             );
         } else {
-            require(
-                IERC20(fromToken).transferFrom(msg.sender, address(this), amount), 
-                "INSUFFICIENT AMOUNT: ERC20 TRANSFER FROM FAILED"
-            );
+            TransferHelper.safeTransferFrom(fromToken, msg.sender, address(this), amount);
         }
          
         // Swap on DODO Router
@@ -313,10 +310,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 revertOptions
             );
         } else {
-            require(
-                IERC20(asset).transferFrom(msg.sender, address(this), amount),
-                "INSUFFICIENT AMOUNT: ERC20 TRANSFER FROM FAILED"
-            );
+            TransferHelper.safeTransferFrom(asset, msg.sender, address(this), amount);
             _handleERC20Deposit(
                 targetContract, 
                 amount,
@@ -356,7 +350,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address evmWalletAddress = address(bytes20(recipient));
 
         if(!fromIsETH) {
-            IERC20(fromToken).transferFrom(msg.sender, address(this), amount);
+            TransferHelper.safeTransferFrom(fromToken, msg.sender, address(this), amount);
         }
 
         uint256 outputAmount;
@@ -367,9 +361,9 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         }
 
         if(toIsETH) {
-            payable(evmWalletAddress).transfer(outputAmount);
+            TransferHelper.safeTransferETH(evmWalletAddress, outputAmount);
         } else {
-            IERC20(toToken).transfer(evmWalletAddress, outputAmount);
+            TransferHelper.safeTransfer(toToken, evmWalletAddress, outputAmount);
         }
         
         emit EddyCrossChainReceive(
