@@ -277,27 +277,21 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         );
     }
 
-    /**
-     * @notice - Function to withdraw using gateway
-     * @param sender Sender address
-     * @param outputToken output token address
-     * @param amount amount to withdraw
-     */
     function withdraw(
         bytes32 externalId,
-        bytes memory sender,
+        bytes memory receiver,
         address outputToken,
         uint256 amount
     ) internal {
         gateway.withdraw(
-            sender,
+            receiver,
             amount,
             outputToken,
             RevertOptions({
                 revertAddress: address(this),
                 callOnRevert: true,
                 abortAddress: address(0),
-                revertMessage: bytes.concat(externalId, bytes20(sender)),
+                revertMessage: bytes.concat(externalId, receiver),
                 onRevertGasLimit: gasLimit
             })
         );
