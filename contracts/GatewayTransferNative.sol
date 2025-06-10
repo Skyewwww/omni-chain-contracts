@@ -311,7 +311,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         );
 
         uint amountInMax = (amountsQuote[0]) + (slippage * amountsQuote[0]) / 1000;
-        IZRC20(targetZRC20).approve(UniswapRouter, amountInMax);
+        TransferHelper.safeApprove(targetZRC20, UniswapRouter, amountInMax);
 
         // Swap TargetZRC20 to gasZRC20
         uint[] memory amounts = IUniswapV2Router01(UniswapRouter)
@@ -325,9 +325,9 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
 
         require(IZRC20(gasZRC20).balanceOf(address(this)) >= gasFee, "INSUFFICIENT_GAS_FOR_WITHDRAW");
         require(targetAmount - amountInMax > 0, "INSUFFICIENT_AMOUNT_FOR_WITHDRAW");
-
-        IZRC20(gasZRC20).approve(address(gateway), gasFee);
-        IZRC20(targetZRC20).approve(address(gateway), targetAmount - amounts[0]);
+        
+        TransferHelper.safeApprove(gasZRC20, address(gateway), gasFee);
+        TransferHelper.safeApprove(targetZRC20, address(gateway), targetAmount - amounts[0]);
 
         amountsOut = targetAmount - amounts[0];
     }
@@ -425,7 +425,10 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             return amount;
         }
 
-        IZRC20(params.fromToken).approve(DODOApprove, amount);
+        if(params.fromToken != _ETH_ADDRESS_) {
+            TransferHelper.safeApprove(params.fromToken, DODOApprove, params.fromTokenAmount);
+        }
+
         return IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
             params.fromToken,
             params.toToken,
@@ -449,7 +452,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         uint256 gasFee
     ) internal {
         if(gasFee >= outputAmount) revert NotEnoughToPayGasFee();
-        IZRC20(decoded.targetZRC20).approve(address(gateway), outputAmount + gasFee);
+        TransferHelper.safeApprove(decoded.targetZRC20, address(gateway), outputAmount + gasFee);
         withdraw(
             externalId, 
             decoded.receiver, 
@@ -468,7 +471,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
 
         if (decoded.targetZRC20 == gasZRC20) {
             if (gasFee >= outputAmount) revert NotEnoughToPayGasFee();
-            IZRC20(decoded.targetZRC20).approve(address(gateway), outputAmount + gasFee);
+            TransferHelper.safeApprove(decoded.targetZRC20, address(gateway), outputAmount + gasFee);
 
             bytes memory data = SwapDataHelperLib.buildOutputMessage(
                 externalId, 
@@ -527,7 +530,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         bytes calldata message
     ) external payable {
         if(zrc20 != _ETH_ADDRESS_) {
-            require(IZRC20(zrc20).transferFrom(msg.sender, address(this), amount), "INSUFFICIENT ALLOWANCE: TRANSFER FROM FAILED");
+            TransferHelper.safeTransferFrom(zrc20, msg.sender, address(this), amount);
         } 
 
         globalNonce++;

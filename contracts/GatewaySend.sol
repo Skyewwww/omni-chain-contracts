@@ -181,7 +181,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bytes memory message,
         RevertOptions memory revertOptions
     ) internal {
-        IERC20(asset).approve(address(gateway), amount);
+        TransferHelper.safeApprove(asset, address(gateway), amount);
 
         gateway.depositAndCall(
             targetContract,
@@ -196,7 +196,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
 
         if(params.fromToken != _ETH_ADDRESS_) {
-            IERC20(params.fromToken).approve(DODOApprove, params.fromTokenAmount);
+            TransferHelper.safeApprove(params.fromToken, DODOApprove, params.fromTokenAmount);
         }
 
         return IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
