@@ -236,10 +236,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
         // Handle input token
         if(fromIsETH) {
-            require(
-                msg.value >= amount, 
-                "INSUFFICIENT AMOUNT: ETH NOT ENOUGH"
-            );
+            require( msg.value >= amount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
         } else {
             TransferHelper.safeTransferFrom(fromToken, msg.sender, address(this), amount);
         }
@@ -247,7 +244,8 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
 
         // Swap on DODO Router
-        require((fromToken == params.fromToken) && (asset == params.toToken), "INVALID_TOKEN_AADRESS: TOKEN_NOT_MATCH");
+        require((fromToken == params.fromToken) && (asset == params.toToken), "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH");
+        require(amount == params.fromTokenAmount, "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH");
         uint256 outputAmount = _doMixSwap(amount, params);
 
         // Construct message and revert options
@@ -365,7 +363,8 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
 
         // Swap on DODO Router
-        require((fromToken == params.fromToken) && (toToken == params.toToken), "INVALID_TOKEN_AADRESS: TOKEN_NOT_MATCH");
+        require((fromToken == params.fromToken) && (toToken == params.toToken), "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH");
+        require(amount == params.fromTokenAmount, "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH");
         uint256 outputAmount = swapData.length > 0 
             ? _doMixSwap(amount, params)
             : amount;
