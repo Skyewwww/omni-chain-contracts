@@ -392,7 +392,10 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             );
         } else {
             // Swap on DODO Router
-            uint256 outputAmount = _doMixSwap(decoded.swapData, amount, params);
+            require((zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken), "INVALID_TOKEN_AADRESS: TOKEN_NOT_MATCH");
+            uint256 outputAmount = decoded.swapData.length > 0 
+                ? _doMixSwap(amount, params)
+                : amount;
 
             if (decoded.targetZRC20 == WZETA) {
                 // withdraw WZETA to get Zeta in 1:1 ratio
@@ -423,14 +426,9 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     }
 
     function _doMixSwap(
-        bytes memory swapData, 
         uint256 amount, 
         MixSwapParams memory params
     ) internal returns (uint256 outputAmount) {
-        if (swapData.length == 0) {
-            return amount;
-        }
-
         bool fromIsETH = params.fromToken == _ETH_ADDRESS_;
         uint256 valueToSend = fromIsETH ? amount : 0;
 
@@ -540,7 +538,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     ) external payable {
         if(zrc20 != _ETH_ADDRESS_) {
             TransferHelper.safeTransferFrom(zrc20, msg.sender, address(this), amount);
-        } 
+        }
 
         globalNonce++;
         bytes32 externalId = _calcExternalId(msg.sender);
@@ -558,7 +556,10 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         amount -= platformFeesForTx;
 
         // Swap on DODO Router
-        uint256 outputAmount = _doMixSwap(decoded.swapDataZ, amount, params);
+        require((zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken), "INVALID_TOKEN_AADRESS: TOKEN_NOT_MATCH");
+        uint256 outputAmount = decoded.swapDataZ.length > 0 
+            ? _doMixSwap(amount, params)
+            : amount;
         
         // Withdraw
         if (decoded.dstChainId == BITCOIN_EDDY) {
