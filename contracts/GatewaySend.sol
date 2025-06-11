@@ -216,7 +216,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     function depositAndCall(
-        address fromToken,
+        address fromToken, 
         uint256 amount,
         bytes calldata swapData,
         address targetContract,
@@ -227,21 +227,19 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         globalNonce++;
         bytes32 externalId = _calcExternalId(msg.sender);
         bool fromIsETH = (fromToken == _ETH_ADDRESS_);
+        bool toIsETH = (asset == _ETH_ADDRESS_);
 
-        // Handle input token
-        if(fromIsETH) {
-            require(
-                msg.value >= amount, 
-                "INSUFFICIENT AMOUNT: ETH NOT ENOUGH"
-            );
+        if (fromIsETH) {
+            require(msg.value >= amount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
         } else {
             TransferHelper.safeTransferFrom(fromToken, msg.sender, address(this), amount);
         }
-         
-        // Swap on DODO Router
-        uint256 outputAmount = _doMixSwap(swapData);
+        
+        uint256 balanceBefore = (toIsETH && fromIsETH) ? 0 : address(this).balance;
+        uint256 outputAmount = swapData.length > 0 
+            ? _doMixSwap(swapData)
+            : amount;
 
-        // Construct message and revert options
         bytes memory message = concatBytes(externalId, payload);
         RevertOptions memory revertOptions = RevertOptions({
             revertAddress: address(this),
@@ -251,22 +249,13 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             onRevertGasLimit: gasLimit
         });
 
-        bool toIsETH = (asset == _ETH_ADDRESS_);
         if (toIsETH) {
-            _handleETHDeposit(
-                targetContract,
-                outputAmount,
-                message,
-                revertOptions
-            );
+            uint256 balanceAfter = address(this).balance;
+            require((balanceAfter - balanceBefore) >= outputAmount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
+
+            _handleETHDeposit(targetContract, outputAmount, message, revertOptions);
         } else {
-            _handleERC20Deposit(
-                targetContract,
-                outputAmount,
-                asset,
-                message,
-                revertOptions
-            );
+            _handleERC20Deposit(targetContract, outputAmount, asset, message, revertOptions);
         }
 
         emit EddyCrossChainSend(
@@ -281,56 +270,6 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         );
     }
 
-    function depositAndCall(
-        address targetContract,
-        uint256 amount,
-        address asset,
-        uint32 dstChainId,
-        bytes calldata payload
-    ) public payable {
-        globalNonce++;
-        bytes32 externalId = _calcExternalId(msg.sender);
-        bool isETH = (asset == _ETH_ADDRESS_);
-        bytes memory message = concatBytes(externalId, payload);
-
-        RevertOptions memory revertOptions = RevertOptions({
-            revertAddress: address(this),
-            callOnRevert: true,
-            abortAddress: targetContract,
-            revertMessage: bytes.concat(externalId, bytes20(msg.sender)),
-            onRevertGasLimit: gasLimit
-        });
-
-        if (isETH) {
-            require(msg.value >= amount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
-            _handleETHDeposit(
-                targetContract, 
-                msg.value,
-                message, 
-                revertOptions
-            );
-        } else {
-            TransferHelper.safeTransferFrom(asset, msg.sender, address(this), amount);
-            _handleERC20Deposit(
-                targetContract, 
-                amount,
-                asset, 
-                message, 
-                revertOptions
-            );
-        }
-
-        emit EddyCrossChainSend(
-            externalId,
-            dstChainId,
-            asset,
-            asset,
-            amount,
-            amount,
-            msg.sender,
-            message
-        );
-    }
 
     function onCall(
         MessageContext calldata /*context*/,

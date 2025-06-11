@@ -110,8 +110,10 @@ contract GatewaySendTest is BaseTest {
 
         vm.expectRevert();
         gatewaySendA.depositAndCall(
-            targetContract,
+            _ETH_ADDRESS_,
             amount,
+            "",
+            targetContract,
             _ETH_ADDRESS_,
             dstChainId,
             payload
@@ -119,8 +121,10 @@ contract GatewaySendTest is BaseTest {
 
         vm.expectRevert();
         gatewaySendA.depositAndCall(
-            targetContract,
+            address(token1A),
             10000 ether,
+            "",
+            targetContract,
             address(token1A),
             dstChainId,
             payload

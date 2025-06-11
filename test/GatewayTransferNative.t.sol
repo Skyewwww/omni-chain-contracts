@@ -13,10 +13,12 @@ contract GatewayTransferNativeTest is BaseTest {
     
     // A - zetachain: token1A -> token1Z
     function test_A2Z() public {
-        address targetContract = address(gatewayTransferNative);
+        address fromToken = address(token1A);
         uint256 amount = 100 ether;
-        uint32 dstChainId = 7000;
+        bytes memory swapDataA = "";
+        address targetContract = address(gatewayTransferNative);
         address asset = address(token1A);
+        uint32 dstChainId = 7000;
         address targetZRC20 = address(token1Z);
         bytes memory sender = abi.encodePacked(user1);
         bytes memory receiver = abi.encodePacked(user2);
@@ -34,8 +36,10 @@ contract GatewayTransferNativeTest is BaseTest {
             amount
         );
         gatewaySendA.depositAndCall(
-            targetContract,
+            fromToken,
             amount,
+            swapDataA,
+            targetContract,
             asset,
             dstChainId,
             payload
@@ -48,10 +52,12 @@ contract GatewayTransferNativeTest is BaseTest {
 
     // A - zetachain swap: token1A -> token1Z -> token2Z
     function test_A2ZSwap() public {
-        address targetContract = address(gatewayTransferNative);
+        address fromToken = address(token1A);
         uint256 amount = 100 ether;
-        uint32 dstChainId = 7000;
+        bytes memory swapDataA = "";
+        address targetContract = address(gatewayTransferNative);
         address asset = address(token1A);
+        uint32 dstChainId = 7000;
         address targetZRC20 = address(token2Z);
         bytes memory sender = abi.encodePacked(user1);
         bytes memory receiver = abi.encodePacked(user2);
@@ -82,8 +88,10 @@ contract GatewayTransferNativeTest is BaseTest {
             amount
         );
         gatewaySendA.depositAndCall(
-            targetContract,
+            fromToken,
             amount,
+            swapDataA,
+            targetContract,
             asset,
             dstChainId,
             payload
@@ -96,10 +104,12 @@ contract GatewayTransferNativeTest is BaseTest {
 
     // A native token - zetachain swap: ETH -> token3Z -> token2Z
     function test_ANative2ZSwap() public {
-        address targetContract = address(gatewayTransferNative);
+        address fromToken = _ETH_ADDRESS_;
         uint256 amount = 100 ether;
-        uint32 dstChainId = 7000;
+        bytes memory swapDataA = "";
+        address targetContract = address(gatewayTransferNative);
         address asset = _ETH_ADDRESS_;
+        uint32 dstChainId = 7000;
         address targetZRC20 = address(token2Z);
         bytes memory sender = abi.encodePacked(user1);
         bytes memory receiver = abi.encodePacked(user2);
@@ -126,8 +136,10 @@ contract GatewayTransferNativeTest is BaseTest {
 
         vm.startPrank(user1);
         gatewaySendA.depositAndCall{value: amount}(
-            targetContract,
+            fromToken,
             amount,
+            swapDataA,
+            targetContract,
             asset,
             dstChainId,
             payload

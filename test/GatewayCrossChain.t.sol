@@ -13,8 +13,10 @@ import {console} from "forge-std/console.sol";
 contract GatewayCrossChainTest is BaseTest {
     // A zetachain - B swap: token2A -> token2Z -> token2B -> token1B
     function test_A2Z2BSwap() public {
-        address targetContract = address(gatewayCrossChain);
+        address fromToken = address(token2A);
         uint256 amount = 100 ether;
+        bytes memory swapDataA = "";
+        address targetContract = address(gatewayCrossChain);
         address asset = address(token2A);
         uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
@@ -60,8 +62,10 @@ contract GatewayCrossChainTest is BaseTest {
             amount
         );
         gatewaySendA.depositAndCall(
-            targetContract,
+            fromToken,
             amount,
+            swapDataA,
+            targetContract,
             asset,
             dstChainId,
             payload
@@ -74,8 +78,10 @@ contract GatewayCrossChainTest is BaseTest {
 
     // A - zetachain swap - B: token2A -> token2Z -> token1Z -> token1B
     function test_A2ZSwap2B() public {
-        address targetContract = address(gatewayCrossChain);
+        address fromToken = address(token2A);
         uint256 amount = 100 ether;
+        bytes memory swapDataA = "";
+        address targetContract = address(gatewayCrossChain);
         address asset = address(token2A);
         uint32 dstChainId = 2;
         address targetZRC20 = address(token1Z);
@@ -121,8 +127,10 @@ contract GatewayCrossChainTest is BaseTest {
             amount
         );
         gatewaySendA.depositAndCall(
-            targetContract,
+            fromToken,
             amount,
+            swapDataA,
+            targetContract,
             asset,
             dstChainId,
             payload
@@ -135,8 +143,10 @@ contract GatewayCrossChainTest is BaseTest {
 
     // A - zetachain swap - B: token2A -> token2Z -> token1Z -> token1B -> token2B
     function test_A2ZSwap2BSwap() public {
-        address targetContract = address(gatewayCrossChain);
+        address fromToken = address(token2A);
         uint256 amount = 100 ether;
+        bytes memory swapDataA = "";
+        address targetContract = address(gatewayCrossChain);
         address asset = address(token2A);
         uint32 dstChainId = 2;
         address targetZRC20 = address(token1Z);
@@ -195,8 +205,10 @@ contract GatewayCrossChainTest is BaseTest {
             amount
         );
         gatewaySendA.depositAndCall(
-            targetContract,
+            fromToken,
             amount,
+            swapDataA,
+            targetContract,
             asset,
             dstChainId,
             payload
