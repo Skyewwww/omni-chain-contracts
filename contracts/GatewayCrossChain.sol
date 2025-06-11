@@ -564,22 +564,20 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
     function claimRefund(bytes32 externalId) external {
         RefundInfo storage refundInfo = refundInfos[externalId];
 
-        address receiver;
+        address receiver = msg.sender;
         if(refundInfo.walletAddress.length == 20) {
             receiver = address(uint160(bytes20(refundInfo.walletAddress)));
         }
         require(bots[msg.sender] || msg.sender == receiver, "INVALID_CALLER");
         require(refundInfo.externalId != "", "REFUND_NOT_EXIST");
         
-        address token = refundInfo.token;
-        uint256 amount = refundInfo.amount;
+        TransferHelper.safeTransfer(refundInfo.token, receiver, refundInfo.amount);
         delete refundInfos[externalId];
-        TransferHelper.safeTransfer(token, msg.sender, amount);
-       
+
         emit EddyCrossChainRefundClaimed(
             externalId,
-            token,
-            amount,
+            refundInfo.token,
+            refundInfo.amount,
             abi.encodePacked(msg.sender)
         );
     }
