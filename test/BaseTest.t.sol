@@ -74,7 +74,6 @@ contract BaseTest is Test {
         token3Z = new ZRC20Mock("NativeToken", "NT", 18);
         token1B = new ERC20Mock("Token1B", "TK1B", 18);
         token2B = new ERC20Mock("Token2B", "TK2B", 18);
-        token3B = new ERC20Mock("Token3B", "TK3B", 18);
         btcZ = new ZRC20Mock("BTCZ", "BTCZ", 18);
         btc = new ERC20Mock("BTC", "BTC", 18);
 
@@ -168,7 +167,7 @@ contract BaseTest is Test {
         gatewayB.setGatewayZEVM(address(gatewayZEVM));
         gatewayB.setZRC20(address(token1B), address(token1Z));
         gatewayB.setZRC20(address(token2B), address(token2Z));
-        gatewayB.setZRC20(address(token3B), address(token3Z));
+        gatewayB.setZRC20(_ETH_ADDRESS_, address(token3Z));
         gatewayB.setZRC20(address(btc), address(btcZ));
         gatewayB.setDODORouteProxy(address(dodoRouteProxyB));
         gatewayB.setEVMAddress(btcAddress, address(user2));
@@ -200,8 +199,25 @@ contract BaseTest is Test {
             block.timestamp + 60
         );
 
+        // create token1Z - token3Z pool for gas fee
+        token1Z.mint(address(this), initialBalance);
+        token3Z.mint(address(this), initialBalance);
+        token1Z.approve(address(router), initialBalance);
+        token3Z.approve(address(router), initialBalance);
+        router.addLiquidity(
+            address(token1Z),
+            address(token3Z),
+            initialBalance,
+            initialBalance,
+            0,
+            0,
+            address(this),
+            block.timestamp + 60
+        );
+
         // mint tokens
         vm.deal(user1, initialBalance);
+        vm.deal(address(gatewayB), initialBalance);
         vm.deal(address(dodoRouteProxyA), initialBalance);
         vm.deal(address(dodoRouteProxyB), initialBalance);
 
@@ -216,6 +232,7 @@ contract BaseTest is Test {
         token2Z.mint(user1, initialBalance);
         token2Z.mint(address(gatewayZEVM), initialBalance);
         token2Z.mint(address(dodoRouteProxyZ), initialBalance);
+        token3Z.mint(user1, initialBalance);
         token3Z.mint(address(gatewayZEVM), initialBalance);
         token3Z.mint(address(dodoRouteProxyZ), initialBalance);
         btcZ.mint(address(dodoRouteProxyZ), initialBalance);

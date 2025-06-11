@@ -290,18 +290,21 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bool toIsETH = (toToken == _ETH_ADDRESS_);
         address evmWalletAddress = address(bytes20(recipient));
 
-        if(!fromIsETH) {
+        if (fromIsETH) {
+            require(msg.value >= amount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
+        } else {
             TransferHelper.safeTransferFrom(fromToken, msg.sender, address(this), amount);
         }
 
-        uint256 outputAmount;
-        if(fromToken == toToken) {
-            outputAmount = amount;
-        } else {
-            outputAmount = _doMixSwap(swapData);
-        }
+        uint256 balanceBefore = (toIsETH && fromIsETH) ? 0 : address(this).balance;
+        uint256 outputAmount = swapData.length > 0 
+            ? _doMixSwap(swapData)
+            : amount;
 
-        if(toIsETH) {
+        if (toIsETH) {
+            uint256 balanceAfter = address(this).balance;
+            require((balanceAfter - balanceBefore) >= outputAmount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
+
             TransferHelper.safeTransferETH(evmWalletAddress, outputAmount);
         } else {
             TransferHelper.safeTransfer(toToken, evmWalletAddress, outputAmount);

@@ -329,15 +329,11 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
     }
 
     function _doMixSwap(
-        bytes memory swapData, 
         uint256 amount, 
         MixSwapParams memory params
     ) internal returns (uint256 outputAmount) {
-        if (swapData.length == 0) {
-            return amount;
-        }
-
         TransferHelper.safeApprove(params.fromToken, DODOApprove, amount);
+
         return IDODORouteProxy(DODORouteProxy).mixSwap(
             params.fromToken,
             params.toToken,
@@ -456,7 +452,9 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         amount -= platformFeesForTx;
 
         // Swap on DODO Router
-        uint256 outputAmount = _doMixSwap(decoded.swapDataZ, amount, params);
+        uint256 outputAmount = decoded.swapDataZ.length > 0 
+            ? _doMixSwap(amount, params)
+            : amount;
 
         // Withdraw
         if (decoded.dstChainId == BITCOIN_EDDY) {

@@ -103,10 +103,14 @@ contract GatewayEVMMock {
         RevertOptions calldata /*revertOptions*/
     ) external payable {
         address asset = toERC20[zrc20];
+        uint256 valueToSend = asset == _ETH_ADDRESS_ ? amount : 0;
+
         if(receiver.length == 20) {
             address targetContract = address(bytes20(receiver));
-            IERC20(asset).approve(targetContract, amount);
-            Callable(targetContract).onCall{value: msg.value}(
+            if(asset != _ETH_ADDRESS_) {
+                IERC20(asset).approve(targetContract, amount);
+            }
+            Callable(targetContract).onCall{value: valueToSend}(
                 MessageContext({
                     sender: address(this)
                 }),
@@ -115,8 +119,10 @@ contract GatewayEVMMock {
         } else {
             address targetContract = toEVMAddress[receiver];
             (, bytes memory data) = decodeInput(message);
-            IERC20(asset).approve(targetContract, amount);
-            Callable(targetContract).onCall{value: msg.value}(
+            if(asset != _ETH_ADDRESS_) {
+                IERC20(asset).approve(targetContract, amount);
+            }
+            Callable(targetContract).onCall{value: valueToSend}(
                 MessageContext({
                     sender: address(this)
                 }),
