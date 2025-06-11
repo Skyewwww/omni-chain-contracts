@@ -392,7 +392,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             );
         } else {
             // Swap on DODO Router
-            require((zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken), "INVALID_TOKEN_AADRESS: TOKEN_NOT_MATCH");
+            require((zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken), "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH");
+            require(amount == params.fromTokenAmount, "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH");
             uint256 outputAmount = decoded.swapData.length > 0 
                 ? _doMixSwap(amount, params)
                 : amount;
@@ -556,7 +557,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         amount -= platformFeesForTx;
 
         // Swap on DODO Router
-        require((zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken), "INVALID_TOKEN_AADRESS: TOKEN_NOT_MATCH");
+        require((zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken), "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH");
+        require(amount == params.fromTokenAmount, "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH");
         uint256 outputAmount = decoded.swapDataZ.length > 0 
             ? _doMixSwap(amount, params)
             : amount;
