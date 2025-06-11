@@ -157,9 +157,16 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         }
     }
 
-    function _calcExternalId(address sender) internal view returns (bytes32 externalId) {
-        externalId = keccak256(abi.encodePacked(address(this), sender, globalNonce, block.timestamp));
-    }
+    function _calcExternalId(address sender) internal view returns (bytes32) {  
+        return keccak256(abi.encodePacked(  
+            address(this),  
+            sender,  
+            globalNonce,  
+            block.timestamp,
+            blockhash(block.number - 1),  // Recent unpredictable hash  
+            block.prevrandao  // Post-merge randomness
+        ));  
+    }  
 
     function _handleETHDeposit(
         address targetContract,

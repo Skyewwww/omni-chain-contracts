@@ -173,10 +173,16 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         }
     }
 
-    function _calcExternalId(address sender) internal view returns (bytes32 externalId) {
-        externalId = keccak256(abi.encodePacked(address(this), sender, globalNonce, block.timestamp));
-    }
-
+    function _calcExternalId(address sender) internal view returns (bytes32) {  
+        return keccak256(abi.encodePacked(  
+            address(this),  
+            sender,  
+            globalNonce,  
+            block.timestamp,
+            blockhash(block.number - 1),  // Recent unpredictable hash  
+            block.prevrandao  // Post-merge randomness
+        ));  
+    }  
     // ============== Uniswap Helper ================ 
 
     // returns sorted token addresses, used to handle return values from pairs sorted in this order
@@ -625,6 +631,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 walletAddress
             );
         } else {
+            if(refundInfos[externalId].externalId == 0) return;
+
             RefundInfo memory refundInfo = RefundInfo({
                 externalId: externalId,
                 token: context.asset,
@@ -647,6 +655,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         bytes32 externalId = bytes32(abortContext.revertMessage[0:32]);
         bytes memory walletAddress = abortContext.revertMessage[32:];
 
+        if(refundInfos[externalId].externalId == 0) return;
+        
         RefundInfo memory refundInfo = RefundInfo({
             externalId: externalId,
             token: abortContext.asset,
