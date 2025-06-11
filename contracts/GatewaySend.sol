@@ -181,6 +181,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bytes memory message,
         RevertOptions memory revertOptions
     ) internal {
+        TransferHelper.safeApprove(asset, address(gateway), 0);
         TransferHelper.safeApprove(asset, address(gateway), amount);
 
         gateway.depositAndCall(
@@ -196,6 +197,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
 
         if(params.fromToken != _ETH_ADDRESS_) {
+            TransferHelper.safeApprove(params.fromToken, DODOApprove, 0);
             TransferHelper.safeApprove(params.fromToken, DODOApprove, params.fromTokenAmount);
         }
 
