@@ -193,15 +193,19 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         );
     }
 
-    function _doMixSwap(bytes calldata swapData) internal returns (uint256) {
-        MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
+    function _doMixSwap(
+        uint256 amount, 
+        MixSwapParams memory params
+    ) internal returns (uint256) {
+        bool fromIsETH = params.fromToken == _ETH_ADDRESS_;
+        uint256 valueToSend = fromIsETH ? amount : 0;
 
         if(params.fromToken != _ETH_ADDRESS_) {
             TransferHelper.safeApprove(params.fromToken, DODOApprove, 0);
             TransferHelper.safeApprove(params.fromToken, DODOApprove, params.fromTokenAmount);
         }
 
-        return IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
+        return IDODORouteProxy(DODORouteProxy).mixSwap{value: valueToSend}(
             params.fromToken,
             params.toToken,
             params.fromTokenAmount,
@@ -240,8 +244,11 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             TransferHelper.safeTransferFrom(fromToken, msg.sender, address(this), amount);
         }
          
+        MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
+
         // Swap on DODO Router
-        uint256 outputAmount = _doMixSwap(swapData);
+        require((fromToken == params.fromToken) && (asset == params.toToken), "INVALID_TOKEN_AADRESS: TOKEN_NOT_MATCH");
+        uint256 outputAmount = _doMixSwap(amount, params);
 
         // Construct message and revert options
         bytes memory message = concatBytes(externalId, payload);
@@ -355,12 +362,13 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             TransferHelper.safeTransferFrom(fromToken, msg.sender, address(this), amount);
         }
 
-        uint256 outputAmount;
-        if(fromToken == toToken) {
-            outputAmount = amount;
-        } else {
-            outputAmount = _doMixSwap(swapData);
-        }
+        MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
+
+        // Swap on DODO Router
+        require((fromToken == params.fromToken) && (toToken == params.toToken), "INVALID_TOKEN_AADRESS: TOKEN_NOT_MATCH");
+        uint256 outputAmount = swapData.length > 0 
+            ? _doMixSwap(amount, params)
+            : amount;
 
         if(toIsETH) {
             TransferHelper.safeTransferETH(evmWalletAddress, outputAmount);
