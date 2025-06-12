@@ -174,7 +174,13 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     }
 
     function _calcExternalId(address sender) internal view returns (bytes32 externalId) {
-        externalId = keccak256(abi.encodePacked(address(this), sender, globalNonce, block.timestamp));
+        externalId = keccak256(abi.encodePacked(
+            block.chainid,
+            address(this), 
+            sender, 
+            globalNonce, 
+            block.timestamp
+        ));
     }
 
     // ============== Uniswap Helper ================ 
