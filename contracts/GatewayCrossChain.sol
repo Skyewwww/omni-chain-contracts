@@ -30,6 +30,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
     address public DODOApprove;
     mapping(bytes32 => RefundInfo) public refundInfos; // externalId => RefundInfo
     mapping(address => bool) public bots;
+    mapping(address => bool) public trustedContracts;
     uint256 public feePercent;
     uint256 public slippage;
     uint256 public gasLimit;
@@ -142,6 +143,10 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
     function setFeePercent(uint256 _feePercent) external onlyOwner {
         feePercent = _feePercent;
         emit FeePercentUpdated(_feePercent);
+    }
+
+    function setGasLimit(uint256 _gasLimit) external onlyOwner {
+        gasLimit = _gasLimit;
     }
 
     function setGateway(address payable _gateway) external onlyOwner {
