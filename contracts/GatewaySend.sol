@@ -199,19 +199,15 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         );
     }
 
-    function _doMixSwap(
-        uint256 amount, 
-        MixSwapParams memory params
-    ) internal returns (uint256) {
-        bool fromIsETH = params.fromToken == _ETH_ADDRESS_;
-        uint256 valueToSend = fromIsETH ? amount : 0;
+    function _doMixSwap(bytes calldata swapData) internal returns (uint256) {
+        MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
 
         if(params.fromToken != _ETH_ADDRESS_) {
             TransferHelper.safeApprove(params.fromToken, DODOApprove, 0);
             TransferHelper.safeApprove(params.fromToken, DODOApprove, params.fromTokenAmount);
         }
 
-        return IDODORouteProxy(DODORouteProxy).mixSwap{value: valueToSend}(
+        return IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
             params.fromToken,
             params.toToken,
             params.fromTokenAmount,
@@ -250,11 +246,8 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             TransferHelper.safeTransferFrom(fromToken, msg.sender, address(this), amount);
         }
          
-        MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
-
         // Swap on DODO Router
-        require((fromToken == params.fromToken) && (asset == params.toToken), "INVALID_TOKEN_AADRESS: TOKEN_NOT_MATCH");
-        uint256 outputAmount = _doMixSwap(amount, params);
+        uint256 outputAmount = _doMixSwap(swapData);
 
         // Construct message and revert options
         bytes memory message = concatBytes(externalId, payload);
@@ -368,13 +361,12 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             TransferHelper.safeTransferFrom(fromToken, msg.sender, address(this), amount);
         }
 
-        MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
-
-        // Swap on DODO Router
-        require((fromToken == params.fromToken) && (toToken == params.toToken), "INVALID_TOKEN_AADRESS: TOKEN_NOT_MATCH");
-        uint256 outputAmount = swapData.length > 0 
-            ? _doMixSwap(amount, params)
-            : amount;
+        uint256 outputAmount;
+        if(fromToken == toToken) {
+            outputAmount = amount;
+        } else {
+            outputAmount = _doMixSwap(swapData);
+        }
 
         if(toIsETH) {
             TransferHelper.safeTransferETH(evmWalletAddress, outputAmount);
