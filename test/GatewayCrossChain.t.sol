@@ -789,6 +789,7 @@ contract GatewayCrossChainTest is BaseTest {
         gatewayCrossChain.setDODORouteProxy(address(0x111));
         gatewayCrossChain.setDODOApprove(address(0x111));
         gatewayCrossChain.setFeePercent(0);
+        gatewayCrossChain.setGasLimit(2000000);
         gatewayCrossChain.setGateway(payable(address(0x111)));
         gatewayCrossChain.setEddyTreasurySafe(address(0x111));
         gatewayCrossChain.setBot(address(0x111), true);
